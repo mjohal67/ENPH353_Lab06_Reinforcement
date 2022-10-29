@@ -44,19 +44,19 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         self._seed() 
 
         #State
-        self.data = None
+        # self.data = None
         self.max_timeout = 30 #number of consecutive times we let the robot not see a line before we reset
-        self.Q = {} #Q matrix
 
         #Image processing
         self.bridge = CvBridge()
         self.timeout = 0  # Used to keep track of images with no line detected
-        self.lower_blue = np.array([97,  0,   0])
-        self.upper_blue = np.array([150, 255, 255])
         self.road_threshold = 120 #used for binary threshold
         self.crop_bound = 250 #used to crop out everything above cv_frame.shape[0] - CROP_BOUND (above refers to smaller y values)
         #note: in robot.xacro, defined camera's output image dimensions to be 800x800 (constant)
-        
+    
+    # def callback(self, data):
+    #     self.data = data
+
     def process_image(self, data):
         '''
             @brief Coverts data into a opencv image and displays it
@@ -64,7 +64,6 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
 
             @retval (state, done)
         '''
-        print("ENTERED PROCESS IMAGE FUNCTION")
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:

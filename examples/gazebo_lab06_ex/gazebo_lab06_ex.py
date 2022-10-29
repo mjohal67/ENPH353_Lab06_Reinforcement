@@ -50,16 +50,16 @@ if __name__ == '__main__':
 
     for x in range(total_episodes):
         done = False
-
-        cumulated_reward = 0  # Should going forward give more reward then L/R?
-
+        cumulated_reward = 0
         observation = env.reset()
 
+        #decrease chance of random action
         if qlearn.epsilon > 0.05: #stop reducing epsilon at a certain point (don't want all greedy)
             qlearn.epsilon *= epsilon_discount #reduce epsilon each episode
 
         state = ''.join(map(str, observation)) #state holds "old" observation (state we're in before we take action)
 
+        # To change max episode steps, go to gym_gazebo/__init__.py
         i = -1
         while True:
             i += 1

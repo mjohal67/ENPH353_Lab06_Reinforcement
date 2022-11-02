@@ -51,7 +51,7 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         self.bridge = CvBridge()
         self.timeout = 0  # Used to keep track of images with no line detected
         self.road_threshold = 120 #used for binary threshold
-        self.crop_bound = 250 #used to crop out everything above cv_frame.shape[0] - CROP_BOUND (above refers to smaller y values)
+        self.crop_bound = 100 #used to crop out everything above cv_frame.shape[0] - CROP_BOUND (above refers to smaller y values)
         #note: in robot.xacro, defined camera's output image dimensions to be 800x800 (constant)
     
     # def callback(self, data):
@@ -69,7 +69,7 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         except CvBridgeError as e:
             print(e)
 
-        (x_width, y_height, channels) = cv_image.shape #y top is 0, x left is 0
+        (height, width, channels) = cv_image.shape #y top is 0, x left is 0
         frame_cropped = cv_image[-self.crop_bound:-1, :]
         frame_gray = cv2.cvtColor(frame_cropped, cv2.COLOR_BGR2GRAY)
         _, frame_binary_thresh_inv = cv2.threshold(frame_gray, self.road_threshold, 255, cv2.THRESH_BINARY_INV) #road white (255), rest black (0)
@@ -83,7 +83,7 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         # M00 is 0th order moment in x and y, area of non-zero pixels (road)
 
         moment = cv2.moments(frame_binary_thresh_inv)
-        x_centroid = moment["m10"] / (moment["m00"])
+        x_centroid = moment["m10"] / (moment["m00"]+1)
 
         state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         done = False
@@ -95,10 +95,10 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         #    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0] indicates line is in the center
 
         #take width of frame, divide by 10, start from zero and step by width/10 (0-->80, 80-->160, 160-->240, ...)
-        step = x_width/10 #800/10 = 80
+        step = width/10 #800/10 = 80
         state_index = 0
-        for i in range(0, x_width, step):
-            if (x_centroid > i) or (x_centroid < i+step): #if centroid between two thresholds
+        for i in range(0, width, int(step)):
+            if (x_centroid > i) and (x_centroid < i+step): #if centroid between two thresholds
                 state[state_index] = 1
                 break #found location of line, stop looping
             state_index+=1
@@ -111,11 +111,11 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         if(self.timeout == self.max_timeout):
             done = True
 
-        #output feed (cropped, grayscale image with circle for centroid)
-        frame_out = frame_gray
-        frame_out = cv2.circle(frame_binary_thresh_inv, (int(x_centroid), 150), 10, (0, 0, 255), -1)
-        frame_out = cv2.putText(frame_out, "["+(",".join([str(i) for i in state]))+"]", (10, 10), cv2.FONT_HERSHEY_SIMPLEX,color=(255, 255, 255))
+        frame_out = cv2.circle(cv_image, (int(x_centroid), 150), 10, (0, 0, 255), -1)
+        frame_out = cv2.putText(frame_out, "["+(",".join([str(i) for i in state]))+"]", 
+                        (1, 50), cv2.FONT_HERSHEY_SIMPLEX,1,color=(255, 255, 255))
         cv2.imshow("Feed", frame_out)
+        cv2.waitKey(3)
 
         return state, done
 
@@ -153,7 +153,7 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         data = None
         while data is None:
             try:
-                data = rospy.wait_for_message('/rrbot/camera1/image_raw', Image, timeout=5)
+                data = rospy.wait_for_message('/pi_camera/image_raw', Image, timeout=5)
             except:
                 pass
 
@@ -205,7 +205,7 @@ class Gazebo_Lab06_Env(gazebo_env.GazeboEnv):
         data = None
         while data is None:
             try:
-                data = rospy.wait_for_message('/rrbot/camera1/image_raw', Image, timeout=5)
+                data = rospy.wait_for_message('/pi_camera/image_raw', Image, timeout=5)
             except:
                 pass
 

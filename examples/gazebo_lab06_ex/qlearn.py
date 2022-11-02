@@ -17,7 +17,7 @@ class QLearn:
         '''
         Load the Q state-action values from a pickle file.
         '''
-        with open(filename) as f:
+        with open(filename, 'rb') as f:
             self.q = pickle.load(f)
 
         print("Loaded file: {}".format(filename+".pickle"))
@@ -26,7 +26,7 @@ class QLearn:
         '''
         Save the Q state-action values in a pickle file.
         '''
-        with open(filename, 'w') as f:
+        with open(filename, 'wb') as f:
             pickle.dump(self.q, f)
         
         print("Wrote to file: {}".format(filename+".pickle"))
@@ -51,7 +51,7 @@ class QLearn:
             q = self.getQ(state, action) #q for (randomly chosen action) action-state pair
         else: #take a greedy action
             q_list = [self.getQ(state, a) for a in self.actions] #get q's for each action
-            max_q_indicies = [i for i, x in enumerate(q) if x == max(q_list)] #https://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
+            max_q_indicies = [i for i, x in enumerate(q_list) if x == max(q_list)] #https://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
             if len(max_q_indicies) > 1: #if we have more than one instance of a maximum Q (two or more action-state pairs with same Q)
                 chosen_action_index = random.choice(max_q_indicies) #chose random index from indicies associated with max q
                 action = self.actions[chosen_action_index]
@@ -61,7 +61,7 @@ class QLearn:
             q = max(q_list) #return highest q value
 
         if return_q:
-            return action, q
+            return (action, q)
         return action
 
     def learn(self, state1, action1, reward, state2):
